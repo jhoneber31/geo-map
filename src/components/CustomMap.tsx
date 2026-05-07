@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { COORDINATES_MOCK } from "../mock/coordinates";
 
 export const CustomMap = () => {
-  const { position, error, isLoading } = useGeolocation({ enabled: true });
+  const [isLocationEnabled, setIsLocationEnabled] = useState(false);
+  const { position, error, isLoading } = useGeolocation({ enabled: isLocationEnabled });
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -94,16 +95,25 @@ export const CustomMap = () => {
         </div>
       )}
 
-      <button
-        className="absolute top-4 left-4 z-20 bg-blue-500 text-white px-6 py-2 rounded shadow-md hover:bg-blue-600 transition-colors disabled:opacity-50"
-        disabled={!position}
-        onClick={() => {
-          if (!map.current || !position) return;
-          map.current.setCenter([position.lng, position.lat]);
-        }}
-      >
-        Centrar
-      </button>
+      {!isLocationEnabled ? (
+        <button
+          className="absolute top-4 left-4 z-20 bg-green-500 text-white px-6 py-2 rounded shadow-md hover:bg-green-600 transition-colors"
+          onClick={() => setIsLocationEnabled(true)}
+        >
+          Activar mi ubicación
+        </button>
+      ) : (
+        <button
+          className="absolute top-4 left-4 z-20 bg-blue-500 text-white px-6 py-2 rounded shadow-md hover:bg-blue-600 transition-colors disabled:opacity-50"
+          disabled={!position}
+          onClick={() => {
+            if (!map.current || !position) return;
+            map.current.setCenter([position.lng, position.lat]);
+          }}
+        >
+          Centrar
+        </button>
+      )}
 
       <div ref={mapContainer} className={`w-full h-full`}></div>
     </div>
