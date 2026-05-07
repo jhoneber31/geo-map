@@ -12,42 +12,61 @@ type Position = {
 
 export const useGeolocation = ({ enabled }: Props) => {
   const [position, setPosition] = useState<Position | null>(null);
-
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const watchId = useRef<number | null>(null);
-
+  const prevPosition = useRef<Position | null>(null);
 
   useEffect(() => {
-
-    if (!enabled) return
-
-    if (!navigator.geolocation) {
-      setError("Tu navegador no soporta geolocalización");
+    if (!enabled) {
+      setIsLoading(false);
       return;
     }
 
+    if (!navigator.geolocation) {
+      setError("Tu navegador no soporta geolocalización");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
     watchId.current = navigator.geolocation.watchPosition(
       (pos) => {
-        setPosition({
+        const newPos = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy
-        })
+        };
+        if (prevPosition.current) {
+          const latDiff = Math.abs(prevPosition.current.lat - newPos.lat);
+          const lngDiff = Math.abs(prevPosition.current.lng - newPos.lng);
+          if (latDiff < 0.00005 && lngDiff < 0.00005) {
+            return;
+          }
+        }
+
+        prevPosition.current = newPos;
+        setPosition(newPos);
+        setError(null);
+        setIsLoading(false);
       },
       (err) => {
+        setIsLoading(false);
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setError("Permiso denegado");
+            setError("Permiso de GPS denegado. Por favor, habilítalo en tu navegador.");
             break;
           case err.POSITION_UNAVAILABLE:
-            setError("Posición no disponible");
+            setError("Señal de GPS perdida o ubicación no disponible.");
             break;
           case err.TIMEOUT:
-            setError("Timeout obteniendo ubicación");
+            setError("Tiempo de espera agotado al buscar tu ubicación.");
             break;
           default:
-            setError("Error desconocido");
+            setError("Error desconocido al obtener la ubicación.");
         }
       },
       {
@@ -64,10 +83,9 @@ export const useGeolocation = ({ enabled }: Props) => {
     }
   }, [enabled])
 
-
-
   return {
     position,
     error,
+    isLoading,
   };
 };
