@@ -1,16 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-interface Props {
-  enabled: boolean;
-}
-
 type Position = {
   lat: number;
   lng: number;
   accuracy: number;
 };
 
-export const useGeolocation = ({ enabled }: Props) => {
+export const useGeolocation = () => {
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -19,10 +15,6 @@ export const useGeolocation = ({ enabled }: Props) => {
   const prevPosition = useRef<Position | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
-      setIsLoading(false);
-      return;
-    }
 
     if (!navigator.geolocation) {
       setError("Tu navegador no soporta geolocalización");
@@ -81,7 +73,7 @@ export const useGeolocation = ({ enabled }: Props) => {
         navigator.geolocation.clearWatch(watchId.current);
       }
     }
-  }, [enabled])
+  }, [])
 
   return {
     position,
